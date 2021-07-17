@@ -1,0 +1,22 @@
+﻿<Window
+    x:Class="TaobaoProductPhotosSpider.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TaobaoProductPhotosSpider"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBox x:Name="url_box" InputScope="Url" Header="URL"></TextBox>
+        <TextBox x:Name="webdriver_path" Header="webdriver path"></TextBox>
+        <TextBox x:Name="port_box" InputScope="Digits" Header="Port"></TextBox>
+        <Button x:Name="myButton" Click="myButton_Click">Start</Button>
+        <Button x:Name="nextBtn" Click="nextBtn_Click">Next</Button>
+        <TextBox x:Name="filepath_box" Header="report file"/>
+        <CheckBox x:Name="autonext_chk" Checked="autonext_chk_Checked" Unchecked="autonext_chk_Unchecked">AUTO NEXT</CheckBox>
+        <Button x:Name="stop_btn" Click="stop_btn_Click">Stop</Button>
+        <Button x:Name="download_btn" Click="download_btn_Click">Download</Button>
+        <TextBlock></TextBlock>
+    </StackPanel>
+</Window>
