@@ -9,7 +9,7 @@ using static OpenQA.Selenium.RelativeBy;
 
 namespace TaobaoProductPhotosSpider
 {
-    record ReviewInfo(IEnumerable<string> ImgUrl,string RateContent,string RateSku,string Rater,string RateDate);
+    record ReviewInfo(IEnumerable<string> ImgUrl, string RateContent, string RateSku, string Rater, string RateDate, string AppendContent, string AppendDate, IEnumerable<string> AppendImgUrl);
     class Alldata
     {
         public List<ReviewInfo> ReviewInfos { get; set; }
@@ -29,9 +29,13 @@ namespace TaobaoProductPhotosSpider
         }
         public async Task StartAsync()
         {
-            WebDriver = new OpenQA.Selenium.Edge.EdgeDriver(
+            if(WebDriver==null)
+            {
+                WebDriver = new OpenQA.Selenium.Edge.EdgeDriver(
                 OpenQA.Selenium.Edge.EdgeDriverService.CreateDefaultService(webdriverpath, "msedgedriver.exe", webdriverport),
                 new OpenQA.Selenium.Edge.EdgeOptions());
+            }
+
             NoUIDispatcher.Start();
             await NoUIDispatcher.RunAsync(() =>
             {
@@ -89,14 +93,13 @@ namespace TaobaoProductPhotosSpider
                         var nextpage = page.FindElement(By.XPath("a[text()='下一页>>']"));
                         nextpage.Click();
 
-                        var alldata = Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(File.ReadAllText(ReportPath));
+                        var alldata = File.Exists(ReportPath) ? Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(File.ReadAllText(ReportPath)) : null;
                         if (alldata == null)
                             alldata = new Alldata() { ReviewInfos = new List<ReviewInfo>() };
                         alldata.ReviewInfos.AddRange(reviewsresult);
                         File.WriteAllText(ReportPath, Newtonsoft.Json.JsonConvert.SerializeObject(alldata));
 
                         Task.Delay(1000).Wait();
-
                     }
                     else
                     {
@@ -130,7 +133,8 @@ namespace TaobaoProductPhotosSpider
             var ratedate = webElement.FindElement(By.ClassName("tb-r-date")).Text;
             var fulltext = webElement.FindElement(By.ClassName("tb-tbcr-content")).Text;
             var sku = webElement.FindElement(By.ClassName("tb-r-info")).Text;
-            var pics = webElement.FindElements(By.ClassName("photo-item"));
+            var pic = webElement.FindElement(By.ClassName("tb-rev-item-media"));
+            var pics = pic.FindElements(By.ClassName("photo-item"));
             var ano = webElement.FindElement(By.ClassName("from-whom")).Text;
             List<string> urls = new List<string>();
             foreach (var item in pics)
@@ -138,7 +142,23 @@ namespace TaobaoProductPhotosSpider
                 var img = item.FindElement(By.XPath("img"));
                 urls.Add(img.GetAttribute("src"));
             }
-            return new ReviewInfo(urls, fulltext, sku, ano, ratedate);
+            var append = webElement.FindElements(By.ClassName("tb-rev-item-append"));
+            string AppendContent = null; string AppendDate = null;
+            List<string> appendurls = null;
+            if (append.Count==1)
+            {
+                var appendele = append[0];
+                AppendContent = appendele.FindElement(By.ClassName("tb-tbcr-content")).Text;
+                AppendDate = appendele.FindElement(By.ClassName("tb-r-date")).Text;
+                var picappend = webElement.FindElement(By.ClassName("tb-rev-item-media"));
+                var appendpics = picappend.FindElements(By.ClassName("photo-item"));
+                appendurls = new List<string>();
+                foreach (var item in appendpics)
+                {
+                    appendurls.Add(item.GetAttribute("src"));
+                }
+            }
+            return new ReviewInfo(urls, fulltext, sku, ano, ratedate, AppendContent, AppendDate, appendurls);
         }
         public async Task<ReviewInfo> GetTmailReviewDetailAsync(IWebElement webElement)
         {
@@ -153,7 +173,23 @@ namespace TaobaoProductPhotosSpider
             {
                 urls.Add(item.GetAttribute("data-src"));
             }
-            return new ReviewInfo(urls, fulltext, sku, ano, ratedate);
+            var append = webElement.FindElements(By.ClassName("tm-rate-append"));
+            string AppendContent = null; string AppendDate = null;
+            List<string> appendurls = null;
+            if (append.Count==1)
+            {
+                var appendele = append[0];
+                AppendContent = appendele.FindElement(By.ClassName("tm-rate-fulltxt")).Text;
+                AppendDate= appendele.FindElement(By.ClassName("tm-rate-title")).Text;
+                var appendpics = appendele.FindElement(By.ClassName("tm-m-photos"));
+                var appendpicss = appendpics.FindElements(By.XPath(".//li[@data-src]"));
+                appendurls = new List<string>();
+                foreach (var item in appendpicss)
+                {
+                    appendurls.Add(item.GetAttribute("data-src"));
+                }
+            }
+            return new ReviewInfo(urls, fulltext, sku, ano, ratedate, AppendContent, AppendDate, appendurls);
         }
     }
 }

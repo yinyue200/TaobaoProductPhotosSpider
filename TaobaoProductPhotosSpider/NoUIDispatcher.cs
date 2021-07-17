@@ -21,10 +21,14 @@ namespace TaobaoProductPhotosSpider
             System.Diagnostics.Debug.WriteLine(nameof(NoUIDispatcher) + " bedeleted");
         }
 #endif
+        bool isstarted = false;
 #pragma warning disable VSTHRD100
         public async void Start()
 #pragma warning restore VSTHRD100
         {
+            if (isstarted)
+                return;
+            isstarted = true;
             using (od = new ManualResetEvent(false))
             {
                 normaltasklist = new Queue<ValueTuple<Action, TaskCompletionSource<Exception?>?>>();
@@ -80,33 +84,22 @@ namespace TaobaoProductPhotosSpider
 
         public async Task RunAsync(Action agileCallback)
         {
-            try
+            var pk = new TaskCompletionSource<Exception?>();
+            if (normaltasklist == null || od == null)
             {
-                var pk = new TaskCompletionSource<Exception?>();
-                if (normaltasklist == null || od == null)
-                {
-                    System.Diagnostics.Debug.WriteLine(nameof(NoUIDispatcher) + " isdisposed");
-                    return;
-                }
-                lock (normaltasklist)//锁不会等待太久
-                {
-                    normaltasklist.Enqueue(new ValueTuple<Action, TaskCompletionSource<Exception?>?>(agileCallback, pk));
-                }
-                od.Set();
-                var ex = await pk.Task;
-                if (ex != null)
-                {
-                    throw ex;
-                }
+                System.Diagnostics.Debug.WriteLine(nameof(NoUIDispatcher) + " isdisposed");
+                return;
             }
-#if DEBUG
-            catch (Exception e)
+            lock (normaltasklist)//锁不会等待太久
             {
-                System.Diagnostics.Debug.WriteLine(nameof(NoUIDispatcher) + " " + e.ToString());
+                normaltasklist.Enqueue(new ValueTuple<Action, TaskCompletionSource<Exception?>?>(agileCallback, pk));
             }
-#else
-            catch { }
-#endif
+            od.Set();
+            var ex = await pk.Task;
+            if (ex != null)
+            {
+                throw ex;
+            }
         }
         public void Run(Action agileCallback)
         {

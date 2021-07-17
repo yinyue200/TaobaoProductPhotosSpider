@@ -44,6 +44,7 @@ namespace TaobaoProductPhotosSpider
         TaobaoProductSpider taobaoProductSpider;
         private async void myButton_Click(object sender, RoutedEventArgs e)
         {
+            myButton.IsEnabled = false;
             try
             {
                 taobaoProductSpider.ProductUrl = url_box.Text;
@@ -70,11 +71,27 @@ namespace TaobaoProductPhotosSpider
             {
                 await new ContentDialog() { Title="ERROR", Content= err.ToString(), CloseButtonText = "OK", XamlRoot = this.Content.XamlRoot }.ShowAsync();
             }
+            finally
+            {
+                myButton.IsEnabled = true;
+            }
         }
 
         private async void nextBtn_Click(object sender, RoutedEventArgs e)
         {
-            await taobaoProductSpider.NextAsync();
+            nextBtn.IsEnabled = false;
+            try
+            {
+                await taobaoProductSpider.NextAsync();
+            }
+            catch(Exception err)
+            {
+                await new ContentDialog() { Content = err.ToString(), XamlRoot = this.Content.XamlRoot, CloseButtonText = "OK" }.ShowAsync();
+            }
+            finally
+            {
+                nextBtn.IsEnabled = true;
+            }
         }
 
         private void autonext_chk_Checked(object sender, RoutedEventArgs e)
@@ -93,6 +110,7 @@ namespace TaobaoProductPhotosSpider
         }
         private async void download_btn_Click(object sender, RoutedEventArgs e)
         {
+            download_btn.IsEnabled = false;
             try
             {
                 string purl(string url)
@@ -163,6 +181,10 @@ namespace TaobaoProductPhotosSpider
             catch(Exception err)
             {
                 await new ContentDialog() { Content= err.ToString(), XamlRoot = this.Content.XamlRoot, CloseButtonText = "OK" }.ShowAsync();
+            }
+            finally
+            {
+                download_btn.IsEnabled = true;
             }
         }
     }
