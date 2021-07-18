@@ -79,10 +79,11 @@ namespace TaobaoProductPhotosSpider
 
         private async void nextBtn_Click(object sender, RoutedEventArgs e)
         {
+            savelastpage.IsEnabled = false;
             nextBtn.IsEnabled = false;
             try
             {
-                await taobaoProductSpider.NextAsync();
+                await taobaoProductSpider.NextAsync(true);
             }
             catch(Exception err)
             {
@@ -90,6 +91,7 @@ namespace TaobaoProductPhotosSpider
             }
             finally
             {
+                savelastpage.IsEnabled = true;
                 nextBtn.IsEnabled = true;
             }
         }
@@ -185,6 +187,25 @@ namespace TaobaoProductPhotosSpider
             finally
             {
                 download_btn.IsEnabled = true;
+            }
+        }
+
+        private async void savelastpage_Click(object sender, RoutedEventArgs e)
+        {
+            savelastpage.IsEnabled = false;
+            nextBtn.IsEnabled = false;
+            try
+            {
+                await taobaoProductSpider.NextAsync(false);
+            }
+            catch (Exception err)
+            {
+                await new ContentDialog() { Content = err.ToString(), XamlRoot = this.Content.XamlRoot, CloseButtonText = "OK" }.ShowAsync();
+            }
+            finally
+            {
+                savelastpage.IsEnabled = true;
+                nextBtn.IsEnabled = true;
             }
         }
     }

@@ -13,6 +13,7 @@
         <TextBox x:Name="port_box" InputScope="Digits" Header="Port"></TextBox>
         <Button x:Name="myButton" Click="myButton_Click">Start</Button>
         <Button x:Name="nextBtn" Click="nextBtn_Click">Next</Button>
+        <Button x:Name="savelastpage" Click="savelastpage_Click">SavePage</Button>
         <TextBox x:Name="filepath_box" Header="report file"/>
         <CheckBox x:Name="autonext_chk" Checked="autonext_chk_Checked" Unchecked="autonext_chk_Unchecked">AUTO NEXT</CheckBox>
         <Button x:Name="stop_btn" Click="stop_btn_Click">Stop</Button>

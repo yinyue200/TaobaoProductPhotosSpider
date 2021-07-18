@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenQA.Selenium;
+using OpenQA.Selenium.DevTools;
 using static OpenQA.Selenium.RelativeBy;
 
 namespace TaobaoProductPhotosSpider
@@ -21,7 +22,7 @@ namespace TaobaoProductPhotosSpider
         public string webdriverpath { get; set; } = @"C:\Users\yinyu\Documents\commongreensoftwares\edgedriver_win64";
         public string ReportPath { get; set; } = @"C:\Users\yinyu\Documents\testkouhong.json";
         NoUIDispatcher NoUIDispatcher { get; } = new NoUIDispatcher();
-        IWebDriver WebDriver;
+        WebDriver WebDriver;
         public string ProductUrl { get; set; } = "https://detail.tmall.com/item.htm?spm=a230r.1.14.9.4f9a4d3fCtITN4&id=582724323698&ns=1&abbucket=11";
         public void Stop()
         {
@@ -31,11 +32,18 @@ namespace TaobaoProductPhotosSpider
         {
             if(WebDriver==null)
             {
+                var option = new OpenQA.Selenium.Edge.EdgeOptions();
+                //option.AddExcludedArgument("enable-automation");
                 WebDriver = new OpenQA.Selenium.Edge.EdgeDriver(
-                OpenQA.Selenium.Edge.EdgeDriverService.CreateDefaultService(webdriverpath, "msedgedriver.exe", webdriverport),
-                new OpenQA.Selenium.Edge.EdgeOptions());
+                OpenQA.Selenium.Edge.EdgeDriverService.CreateDefaultService(webdriverpath, "msedgedriver.exe", webdriverport), option
+                );
+                if(WebDriver is OpenQA.Selenium.Chromium.ChromiumDriver cd)
+                {
+                    cd.ExecuteChromeCommandWithResult("Page.addScriptToEvaluateOnNewDocument", new Dictionary<string, object> { { "source", @"Object.defineProperty(navigator, 'webdriver', {
+      get: () => false
+    })" } });
+                }
             }
-
             NoUIDispatcher.Start();
             await NoUIDispatcher.RunAsync(() =>
             {
@@ -71,7 +79,7 @@ namespace TaobaoProductPhotosSpider
 
             }).ConfigureAwait(false);
         }
-        public async Task NextAsync()
+        public async Task NextAsync(bool next)
         {
             do
             {
@@ -89,9 +97,13 @@ namespace TaobaoProductPhotosSpider
                             System.Diagnostics.Debug.WriteLine(re.ToString());
                         }
 
-                        var page = WebDriver.FindElement(By.ClassName("rate-paginator"));
-                        var nextpage = page.FindElement(By.XPath("a[text()='下一页>>']"));
-                        nextpage.Click();
+                        if(next)
+                        {
+                            var page = WebDriver.FindElement(By.ClassName("rate-paginator"));
+                            var nextpage = page.FindElement(By.XPath("a[text()='下一页>>']"));
+                            nextpage.Click();
+                        }
+
 
                         var alldata = File.Exists(ReportPath) ? Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(File.ReadAllText(ReportPath)) : null;
                         if (alldata == null)
@@ -113,8 +125,11 @@ namespace TaobaoProductPhotosSpider
                             System.Diagnostics.Debug.WriteLine(re.ToString());
                         }
 
-                        var nextpage = WebDriver.FindElement(By.ClassName("pg-next"));
-                        nextpage.Click();
+                        if(next)
+                        {
+                            var nextpage = WebDriver.FindElement(By.ClassName("pg-next"));
+                            nextpage.Click();
+                        }
 
                         var alldata = File.Exists(ReportPath) ? Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(File.ReadAllText(ReportPath)) : null;
                         if (alldata == null)
@@ -126,7 +141,7 @@ namespace TaobaoProductPhotosSpider
                     }
 
                 }).ConfigureAwait(false);
-            } while (EnableAutoNext);
+            } while (EnableAutoNext && next);
         }
         public async Task<ReviewInfo> GetTaobaoReviewDetailAsync(IWebElement webElement)
         {
