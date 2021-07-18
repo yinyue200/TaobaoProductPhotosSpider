@@ -36,6 +36,7 @@ namespace TaobaoProductPhotosSpider
         public MainWindow()
         {
             this.InitializeComponent();
+            Title = "TaobaoProductPhotosSpider";
             taobaoProductSpider = new TaobaoProductSpider();
             filepath_box.Text = getsetting("reportpath") as string ?? string.Empty;
             webdriver_path.Text = getsetting("webdriverpath") as string ?? string.Empty;
