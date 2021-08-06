@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "toyoloformat": {
+      "commandName": "Project",
+      "commandLineArgs": "convert \"D:\\reports\\口红\\lihuiyu_train.txt\" \"D:\\reports\\口红\" \"D:\\reports\\口红\\yolo_【官方正品】全新Dior迪奥烈艳蓝金唇膏口红新色丝绒999720\\images\" \"D:\\reports\\口红\\yolo_【官方正品】全新Dior迪奥烈艳蓝金唇膏口红新色丝绒999720\\labels\""
+    }
+  }
+}
