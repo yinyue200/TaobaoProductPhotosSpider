@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace toyoloformat
 {
@@ -79,7 +80,7 @@ namespace toyoloformat
             var ymax = max(p1.Item2, p2.Item2, p3.Item2, p4.Item2);
             return (xmin, xmax, ymin, ymax);
         }
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             string[] classlist = new string[] { "口红本体", "口红膏体及本体", "口红涂抹样例", "口红外包装" };
             var app = new CommandLineApplication();
@@ -137,7 +138,58 @@ namespace toyoloformat
                        return 0;
                    });
                });
-            app.Execute(args);
+            _ = app.Command("calc", (command) =>
+               {
+                   var folder = command.Argument("folder", string.Empty);
+                   command.OnExecute(() =>
+                   {
+                       int missingtag = 0;
+                       int backgroundimg = 0;
+                       Dictionary<string, int> calctag = new Dictionary<string, int>();
+                       foreach(var one in classlist)
+                       {
+                           calctag[one] = 0;
+                       }
+                       var folderval = folder.Value;
+                       var filelist = Directory.EnumerateFiles(folderval);
+                       var jpgs = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).ToList();
+                       foreach (var filename in jpgs)
+                       {
+                           var jsonfilename = filename + ".json";
+                           if (File.Exists(jsonfilename))
+                           {
+                               var tagresult = Newtonsoft.Json.JsonConvert.DeserializeObject<TagResult>(File.ReadAllText(jsonfilename));
+                               if (tagresult.PhotosTags.Count == 1 && tagresult.PhotosTags[0] == "无关图片")
+                               {
+                                   backgroundimg++;
+                               }
+                               else if (tagresult.TagCropResults.Count == 0)
+                               {
+                                   missingtag++;
+                               }
+                               else
+                               {
+                                   foreach (var crop in tagresult.TagCropResults)
+                                   {
+                                       calctag[crop.Tag]++;
+                                   }
+                               }
+                           }
+                           else
+                           {
+                               missingtag++;
+                           }
+                       }
+                       Console.WriteLine($"missing {missingtag} background {backgroundimg}");
+                       foreach (var item in calctag)
+                       {
+                           Console.WriteLine($"{item.Key} : {item.Value}");
+                       }
+                       Console.WriteLine($"图片数 ：{jpgs.Count}");
+                       return 0;
+                   });
+               });
+            return app.Execute(args);
         }
     }
 }
