@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TaobaoInfoReciever"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="TaobaoInfoReciever-yinyue200" Height="450" Width="800">
     <Grid>
         <ToggleButton Margin="10,10,0,0" HorizontalAlignment="Left" Width="76" Height="34"
                       VerticalAlignment="Top" Checked="StartButton_Click" 
@@ -16,6 +16,7 @@
                 HorizontalAlignment="Left" Width="67" Click="savebutton_Click" >SAVE</Button>
         <Button x:Name="clearbutton" Margin="414,10,0,0" Height="34" VerticalAlignment="Top" 
                 HorizontalAlignment="Left" Width="67" Click="clearbutton_Click" >Clear</Button>
+        <Button x:Name="downloadbutton" Margin="500,10,0,0" Height="34" VerticalAlignment="Top" HorizontalAlignment="Left" Width="99" Click="downloadbutton_Click">DOWNLOAD</Button>
         <ListView x:Name="list" Margin="0,49,0,0" SelectionMode="Multiple">
             <ListView.ItemTemplate>
                 <DataTemplate>

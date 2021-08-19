@@ -22,12 +22,16 @@ using System.IO;
 
 namespace TaobaoInfoReciever
 {
+    record ReviewInfo(IEnumerable<string> ImgUrl, string RateContent, string RateSku, string Rater, string RateDate, string AppendContent, string AppendDate, IEnumerable<string> AppendImgUrl);
+    class Alldata
+    {
+        public List<ReviewInfo> ReviewInfos { get; set; }
+    }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-        record ReviewInfo(IEnumerable<string> ImgUrl, string RateContent, string RateSku, string Rater, string RateDate, string AppendContent, string AppendDate, IEnumerable<string> AppendImgUrl);
         PeanutButter.SimpleHTTPServer.HttpServer httpServer;
         public MainWindow()
         {
@@ -169,6 +173,18 @@ namespace TaobaoInfoReciever
             httpServer = null;
         }
 
+        private void downloadbutton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.FileName = "test"; // Default file name
+            dialog.DefaultExt = ".json"; // Default file extension
+            dialog.Filter = "JSON files (.json)|*.json"; // Filter files by extension
+            if (dialog.ShowDialog() == true)
+            {
+                new DownloadProgressWindow(dialog.FileName).Show();
+            }
+        }
+
         private void delbutton_Click(object sender, RoutedEventArgs e)
         {
             foreach (var item in list.SelectedItems.Cast<ParsedReviewsInfo>().ToList())
@@ -176,10 +192,7 @@ namespace TaobaoInfoReciever
                 ParsedReviewsInfos.Remove(item);
             }
         }
-        class Alldata
-        {
-            public List<ReviewInfo> ReviewInfos { get; set; }
-        }
+
         private void savebutton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new Microsoft.Win32.SaveFileDialog();
