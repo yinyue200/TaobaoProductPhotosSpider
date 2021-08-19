@@ -33,16 +33,30 @@ namespace TaobaoProductPhotosSpider
             if(WebDriver==null)
             {
                 var option = new OpenQA.Selenium.Edge.EdgeOptions();
+                option.AddArgument("--disable-blink-features=AutomationControlled");
                 //option.AddExcludedArgument("enable-automation");
                 WebDriver = new OpenQA.Selenium.Edge.EdgeDriver(
                 OpenQA.Selenium.Edge.EdgeDriverService.CreateDefaultService(webdriverpath, "msedgedriver.exe", webdriverport), option
                 );
-                if(WebDriver is OpenQA.Selenium.Chromium.ChromiumDriver cd)
+                if (WebDriver is OpenQA.Selenium.Chromium.ChromiumDriver cd)
                 {
-                    cd.ExecuteChromeCommandWithResult("Page.addScriptToEvaluateOnNewDocument", new Dictionary<string, object> { { "source", @"Object.defineProperty(navigator, 'webdriver', {
-      get: () => false
-    })" } });
+                    System.Reflection.Assembly asm = typeof(TaobaoProductSpider).Assembly;
+                    using var stream = asm.GetManifestResourceStream("TaobaoProductPhotosSpider.stealth.min.js");
+                    using var reader = new StreamReader(stream);
+                    var js = await reader.ReadToEndAsync();
+                    cd.ExecuteChromeCommandWithResult("Page.addScriptToEvaluateOnNewDocument", new Dictionary<string, object> { { "source", js } });
                 }
+                //if (WebDriver is OpenQA.Selenium.Chromium.ChromiumDriver cd)
+                //{
+                //    cd.ExecuteChromeCommandWithResult("Page.addScriptToEvaluateOnNewDocument", new Dictionary<string, object> { { "source", @"Object.defineProperty(navigator, 'webdriver', {
+                //  get: () => undefined
+                //})" } });
+                //}
+                //var firefoxoption = new OpenQA.Selenium.Firefox.FirefoxOptions();
+                //var profile = new OpenQA.Selenium.Firefox.FirefoxProfile();
+                //profile.SetPreference("dom.webdriver.enabled", false);
+                //firefoxoption.Profile = profile;
+                //WebDriver = new OpenQA.Selenium.Firefox.FirefoxDriver(webdriverpath,firefoxoption);
             }
             NoUIDispatcher.Start();
             await NoUIDispatcher.RunAsync(() =>

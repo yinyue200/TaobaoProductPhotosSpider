@@ -2,7 +2,7 @@
   "profiles": {
     "toyoloformat": {
       "commandName": "Project",
-      "commandLineArgs": "calc \"D:\\reports\\口红\\YSL圣罗兰小金条细管口红 哑光新色1966红棕色复古红21持久显色\""
+      "commandLineArgs": "convert \"D:\\reports\\口红\\lihuiyu_val.txt\" \"D:\\reports\\口红\" \"D:\\reports\\口红\\yolo999720_【官方正品】全新Dior迪奥烈艳蓝金唇膏口红新色丝绒999720\\images\" \"D:\\reports\\口红\\yolo999720_【官方正品】全新Dior迪奥烈艳蓝金唇膏口红新色丝绒999720\\labels\" -d \"D:\\reports\\口红\\【官方正品】全新Dior迪奥烈艳蓝金唇膏口红 新色丝绒999720.json\""
     }
   }
 }

@@ -4,12 +4,58 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace toyoloformat
 {
     using SizeD = ValueTuple<double, double>;
     class Program
     {
+        class Alldata
+        {
+            public List<ReviewInfo> ReviewInfos { get; set; }
+        }
+        record ReviewInfo(IEnumerable<string> ImgUrl, string RateContent, string RateSku, string Rater, string RateDate, string AppendContent, string AppendDate, IEnumerable<string> AppendImgUrl);
+        static ReviewInfo GetInfo(Dictionary<string, ReviewInfo> cacheinfo, string path)
+        {
+            var npath = System.IO.Path.GetFileNameWithoutExtension(path);
+            var pi = npath.IndexOf('.', StringComparison.Ordinal);
+            var nfilename = pi < 0 ? npath : npath.Substring(0, pi);
+            cacheinfo.TryGetValue(nfilename, out var reviewInfo);
+            return reviewInfo;
+        }
+        static string hex(byte[] s)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(35);
+            for (int i = 0; i < s.Length; i++)
+            {
+                // 将得到的字符串使用十六进制类型格式。格式后的字符是小写的字母，如果使用大写（X）则格式后的字符是大写字符 
+                sb.Append(s[i].ToString("x2", CultureInfo.InvariantCulture));
+            }
+            return sb.ToString();
+        }
+        static Dictionary<string,ReviewInfo> GetCacheInfo(string dirpath)
+        {
+            using MD5 md5 = MD5.Create(); ;
+            Dictionary<string, ReviewInfo> keyValues = new Dictionary<string, ReviewInfo>();
+            var alldata = Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(System.IO.File.ReadAllText(dirpath));
+            if (alldata == null)
+                return null;
+            foreach (var one in alldata.ReviewInfos)
+            {
+                foreach (var url in one.ImgUrl ?? Array.Empty<string>())
+                {
+                    keyValues[hex(md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(url)))] = one;
+                }
+                foreach (var url in one.AppendImgUrl ?? Array.Empty<string>())
+                {
+                    keyValues[hex(md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(url)))] = one;
+                }
+            }
+            return keyValues;
+        }
         static (double xmin, double xmax, double ymin, double ymax) getrectinfo(CropResult cropResult,double imgh,double imgw)
         {
             var x = cropResult.x;
@@ -82,7 +128,7 @@ namespace toyoloformat
         }
         static int Main(string[] args)
         {
-            string[] classlist = new string[] { "口红本体", "口红膏体及本体", "口红涂抹样例", "口红外包装" };
+            string[] classlist = new string[] { "口红本体", "口红膏体及本体", "口红涂抹样例", "口红外包装", "口红本体及膏体999", "口红本体及膏体720" };
             var app = new CommandLineApplication();
             _ = app.Command("convert", (command) =>
                {
@@ -90,12 +136,16 @@ namespace toyoloformat
                    var basefolderforimglist = command.Argument("basefolderforimglist", string.Empty);
                    var tofolderimages = command.Argument("tofolderimages", string.Empty);
                    var tofolderlabels = command.Argument("tofolderlabels", string.Empty);
-                   command.OnExecute(() =>
+                   var detailoption = command.Option("--detail -d <reviewjsonpath>", string.Empty, CommandOptionType.SingleValue);
+
+                   command.OnExecute(() => 
                    {
                        var list = File.ReadAllLines(imglisttxt.Value);
                        var basefolderforimglistval = basefolderforimglist.Value;
                        var tofolderimagesval = tofolderimages.Value;
                        var tofolderlabelsval = tofolderlabels.Value;
+                       var detailoptionval = detailoption.HasValue() ? detailoption.Value() : null;
+                       var cachevalue = detailoptionval == null ? null : GetCacheInfo(detailoptionval);
                        foreach (var one in list)
                        {
                            if (!string.IsNullOrWhiteSpace(one))
@@ -112,13 +162,14 @@ namespace toyoloformat
                                    }
                                    var imgjsonpath = imgpath + ".json";
                                    var txtfilepath = Path.Combine(tofolderlabelsval, imgfilenamepure + ".txt");
-                                   if(File.Exists(imgjsonpath))
+                                   if (File.Exists(imgjsonpath))
                                    {
                                        var imginfo = SixLabors.ImageSharp.Image.Identify(imgpath);
                                        var tagresult = Newtonsoft.Json.JsonConvert.DeserializeObject<TagResult>(File.ReadAllText(imgjsonpath));
                                        if (tagresult != null && tagresult.TagCropResults != null)
                                        {
                                            var str = new StringBuilder();
+                                           var reviewinfo = cachevalue == null ? null : GetInfo(cachevalue, imgpath);
                                            foreach (var item in tagresult.TagCropResults)
                                            {
                                                var re = getrectinfo(item.CropResult, imginfo.Height, imginfo.Width);
@@ -126,8 +177,19 @@ namespace toyoloformat
                                                var ycenter = (re.ymax + re.ymin) / 2.0;
                                                var width = re.xmax - re.xmin;
                                                var height = re.ymax - re.ymin;
-
-                                               str.AppendLine($"{Array.IndexOf(classlist, item.Tag)} {xcenter / imginfo.Width} {ycenter / imginfo.Height} {width / imginfo.Width} {height / imginfo.Height}");
+                                               var index = Array.IndexOf(classlist, item.Tag);
+                                               if (reviewinfo != null)
+                                               {
+                                                   if (item.Tag == "口红膏体及本体" && reviewinfo.RateSku.Contains("999", StringComparison.Ordinal))
+                                                   {
+                                                       index = 4;
+                                                   }
+                                                   if (item.Tag == "口红膏体及本体" && reviewinfo.RateSku.Contains("720", StringComparison.Ordinal))
+                                                   {
+                                                       index = 5;
+                                                   }
+                                               }
+                                               str.AppendLine($"{index} {xcenter / imginfo.Width} {ycenter / imginfo.Height} {width / imginfo.Width} {height / imginfo.Height}");
                                            }
                                            File.WriteAllText(txtfilepath, str.ToString());
                                        }
@@ -138,9 +200,51 @@ namespace toyoloformat
                        return 0;
                    });
                });
+            _ = app.Command("calcreview", (command) =>
+               {
+                   var reviewjson = command.Argument("reviewjsonpath", string.Empty);
+                   var detailpick = command.Option("--detailpick -p <detialpickregex>", string.Empty, CommandOptionType.SingleValue);
+                   command.OnExecute(() =>
+                   {
+                       Dictionary<string, int> calctag = new Dictionary<string, int>();
+                       var reviewjsonval = reviewjson.Value;
+                       var detailpickval = detailpick.HasValue() ? new Regex(detailpick.Value()) : null;
+                       var alldata = Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(System.IO.File.ReadAllText(reviewjsonval));
+                       foreach (var one in alldata.ReviewInfos)
+                       {
+                           var sku = one.RateSku;
+                           if (detailpickval != null)
+                           {
+                               var match = detailpickval.Match(sku);
+                               if (match.Success)
+                               {
+                                   sku = match.Value;
+                               }
+                           }
+                           string key = sku;
+                           if (!calctag.ContainsKey(key))
+                           {
+                               calctag.Add(key, 1);
+                           }
+                           else
+                           {
+                               calctag[key]++;
+                           }
+                       }
+
+                       foreach (var item in calctag)
+                       {
+                           Console.WriteLine($"{item.Key} : {item.Value}");
+                       }
+                       return 0;
+                   });
+               });
             _ = app.Command("calc", (command) =>
                {
                    var folder = command.Argument("folder", string.Empty);
+                   var detailoption = command.Option("--detail -d <reviewjsonpath>", string.Empty, CommandOptionType.SingleValue);
+                   var detailpick = command.Option("--detailpick -p <detialpickregex>", string.Empty, CommandOptionType.SingleValue);
+
                    command.OnExecute(() =>
                    {
                        int missingtag = 0;
@@ -151,6 +255,18 @@ namespace toyoloformat
                            calctag[one] = 0;
                        }
                        var folderval = folder.Value;
+                       var detailpickval = detailpick.HasValue() ? new Regex(detailpick.Value()) : null;
+
+                       Dictionary<string, ReviewInfo> cacheinfo;
+                       if (detailoption.HasValue())
+                       {
+                           cacheinfo = GetCacheInfo(detailoption.Value());
+                       }
+                       else
+                       {
+                           cacheinfo = null;
+                       }
+
                        var filelist = Directory.EnumerateFiles(folderval);
                        var jpgs = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).ToList();
                        foreach (var filename in jpgs)
@@ -171,7 +287,37 @@ namespace toyoloformat
                                {
                                    foreach (var crop in tagresult.TagCropResults)
                                    {
+                                       ReviewInfo reviewInfo = null;
+                                       if (cacheinfo != null)
+                                       {
+                                           reviewInfo = GetInfo(cacheinfo, filename);
+                                       }
                                        calctag[crop.Tag]++;
+
+                                       if (reviewInfo == null)
+                                       {
+                                       }
+                                       else
+                                       {
+                                           var sku = reviewInfo.RateSku;
+                                           if(detailpickval!=null)
+                                           {
+                                               var match = detailpickval.Match(sku);
+                                               if(match.Success)
+                                               {
+                                                   sku = match.Value;
+                                               }
+                                           }
+                                           string key = crop.Tag + ":::" + sku;
+                                           if(!calctag.ContainsKey(key))
+                                           {
+                                               calctag.Add(key, 1);
+                                           }
+                                           else
+                                           {
+                                               calctag[key]++;
+                                           }
+                                       }
                                    }
                                }
                            }
