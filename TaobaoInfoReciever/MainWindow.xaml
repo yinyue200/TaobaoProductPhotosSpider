@@ -1,0 +1,31 @@
+﻿<Window x:Class="TaobaoInfoReciever.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TaobaoInfoReciever"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <ToggleButton Margin="10,10,0,0" HorizontalAlignment="Left" Width="76" Height="34"
+                      VerticalAlignment="Top" Checked="StartButton_Click" 
+                      Unchecked="StopButton_Click">Listen</ToggleButton>
+        <Button x:Name="delbutton" Margin="100,10,0,0" Height="34" VerticalAlignment="Top" 
+                HorizontalAlignment="Left" Width="76" Click="delbutton_Click" >DELETE</Button>
+        <Button x:Name="savebutton" Margin="194,10,0,0" Height="34" VerticalAlignment="Top" 
+                HorizontalAlignment="Left" Width="67" Click="savebutton_Click" >SAVE</Button>
+        <Button x:Name="clearbutton" Margin="414,10,0,0" Height="34" VerticalAlignment="Top" 
+                HorizontalAlignment="Left" Width="67" Click="clearbutton_Click" >Clear</Button>
+        <ListView x:Name="list" Margin="0,49,0,0" SelectionMode="Multiple">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Width="500">
+                        <TextBlock Text="{Binding Page}"></TextBlock>
+                        <TextBlock TextAlignment="Right"  Text="{Binding Reviews.Count}"></TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <TextBox x:Name="portbox"  HorizontalAlignment="Left" Margin="280,18,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+    </Grid>
+</Window>
