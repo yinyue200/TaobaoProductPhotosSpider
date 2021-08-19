@@ -118,7 +118,8 @@ namespace TaobaoInfoReciever
             }
             finally
             {
-                Hide();
+                await Task.Yield();
+                Close();
             }
         }
 
