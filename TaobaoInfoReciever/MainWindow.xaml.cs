@@ -19,6 +19,7 @@ using AngleSharp.XPath;
 using PeanutButter.Utils;
 using System.Collections.ObjectModel;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace TaobaoInfoReciever
 {
@@ -38,15 +39,15 @@ namespace TaobaoInfoReciever
             InitializeComponent();
             list.ItemsSource = ParsedReviewsInfos;
         }
-        record revieveinfo(string url,string fullhtml);
-        record ParsedReviewsInfo(string Page,List<ReviewInfo> Reviews);
+        record revieveinfo(string url, string fullhtml);
+        record ParsedReviewsInfo(string Page, List<ReviewInfo> Reviews);
         ObservableCollection<ParsedReviewsInfo> ParsedReviewsInfos { get; set; } = new ObservableCollection<ParsedReviewsInfo>();
-        private void StartButton_Click(object sender,RoutedEventArgs e)
+        private void StartButton_Click(object sender, RoutedEventArgs e)
         {
             if (httpServer == null)
             {
                 int port;
-                if(int.TryParse(portbox.Text,out port))
+                if (int.TryParse(portbox.Text, out port))
                 {
 
                 }
@@ -202,14 +203,19 @@ namespace TaobaoInfoReciever
 
             // Show save file dialog box
             bool? result = dialog.ShowDialog();
-            if(result.HasValue&&result.Value)
+            if (result.HasValue && result.Value)
             {
                 string filename = dialog.FileName;
                 Alldata alldata = new Alldata
                 {
                     ReviewInfos = ParsedReviewsInfos.Select(a => a.Reviews).Aggregate<IEnumerable<ReviewInfo>>((a, b) => a.Concat(b)).ToList()
                 };
-                File.WriteAllText(filename, Newtonsoft.Json.JsonConvert.SerializeObject(alldata));
+                using (StreamWriter sw = File.CreateText(filename))
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    JsonSerializer serializer = JsonSerializer.CreateDefault();
+                    serializer.Serialize(writer, alldata);
+                }
             }
 
         }

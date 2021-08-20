@@ -55,7 +55,13 @@ namespace TaobaoInfoReciever
                     return url;
                 }
                 var filepath = json;
-                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<Alldata>(File.ReadAllText(filepath));
+                Alldata data;
+                using (var reader = File.OpenText(filepath))
+                {
+                    using var jsontextreader = new Newtonsoft.Json.JsonTextReader(reader);
+                    var se = Newtonsoft.Json.JsonSerializer.CreateDefault();
+                    data = se.Deserialize<Alldata>(jsontextreader);
+                }
                 var dir = Path.GetDirectoryName(filepath);
                 var filename = Path.GetFileNameWithoutExtension(filepath);
                 var dirname = Path.Combine(dir, filename.Trim());
@@ -103,7 +109,7 @@ namespace TaobaoInfoReciever
                             }
                             progress.Value = downloadcount;
                         }
-                    }             
+                    }
                     progress.Value = downloadcount;
                     if (!havenoexist)
                     {
