@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using static MoreLinq.Extensions.ShuffleExtension;
 
 namespace toyoloformat
 {
@@ -36,7 +37,7 @@ namespace toyoloformat
             }
             return sb.ToString();
         }
-        static Dictionary<string,ReviewInfo> GetCacheInfo(string dirpath)
+        static Dictionary<string, ReviewInfo> GetCacheInfo(string dirpath)
         {
             using MD5 md5 = MD5.Create(); ;
             Dictionary<string, ReviewInfo> keyValues = new Dictionary<string, ReviewInfo>();
@@ -56,7 +57,7 @@ namespace toyoloformat
             }
             return keyValues;
         }
-        static (double xmin, double xmax, double ymin, double ymax) getrectinfo(CropResult cropResult,double imgh,double imgw)
+        static (double xmin, double xmax, double ymin, double ymax) getrectinfo(CropResult cropResult, double imgh, double imgw)
         {
             var x = cropResult.x;
             var y = cropResult.y;
@@ -70,7 +71,7 @@ namespace toyoloformat
             var m1 = imgh * ncos;
             var m5 = imgh * nsin;
 
-            SizeD rotatexy(double x0,double y0,double xcenter,double ycenter)
+            SizeD rotatexy(double x0, double y0, double xcenter, double ycenter)
             {
                 var x = (x0 - xcenter) * ncos - (y0 - ycenter) * nsin + xcenter;
                 var y = (x0 - xcenter) * nsin + (y0 - ycenter) * ncos + ycenter;
@@ -128,7 +129,7 @@ namespace toyoloformat
         }
         static int Main(string[] args)
         {
-            string[] classlist = new string[] { "口红本体", "口红膏体及本体", "口红涂抹样例", "口红外包装", "口红本体及膏体999", "口红本体及膏体720" };
+            string[] classlist = new string[] { "口红本体", "口红膏体及本体", "口红涂抹样例", "口红外包装" };
             var app = new CommandLineApplication();
             _ = app.Command("convert", (command) =>
                {
@@ -136,16 +137,16 @@ namespace toyoloformat
                    var basefolderforimglist = command.Argument("basefolderforimglist", string.Empty);
                    var tofolderimages = command.Argument("tofolderimages", string.Empty);
                    var tofolderlabels = command.Argument("tofolderlabels", string.Empty);
-                   var detailoption = command.Option("--detail -d <reviewjsonpath>", string.Empty, CommandOptionType.SingleValue);
+                   //var detailoption = command.Option("--detail -d <reviewjsonpath>", string.Empty, CommandOptionType.SingleValue);
 
-                   command.OnExecute(() => 
+                   command.OnExecute(() =>
                    {
                        var list = File.ReadAllLines(imglisttxt.Value);
                        var basefolderforimglistval = basefolderforimglist.Value;
                        var tofolderimagesval = tofolderimages.Value;
                        var tofolderlabelsval = tofolderlabels.Value;
-                       var detailoptionval = detailoption.HasValue() ? detailoption.Value() : null;
-                       var cachevalue = detailoptionval == null ? null : GetCacheInfo(detailoptionval);
+                       //var detailoptionval = detailoption.HasValue() ? detailoption.Value() : null;
+                       //var cachevalue = detailoptionval == null ? null : GetCacheInfo(detailoptionval);
                        foreach (var one in list)
                        {
                            if (!string.IsNullOrWhiteSpace(one))
@@ -169,7 +170,7 @@ namespace toyoloformat
                                        if (tagresult != null && tagresult.TagCropResults != null)
                                        {
                                            var str = new StringBuilder();
-                                           var reviewinfo = cachevalue == null ? null : GetInfo(cachevalue, imgpath);
+                                           //var reviewinfo = cachevalue == null ? null : GetInfo(cachevalue, imgpath);
                                            foreach (var item in tagresult.TagCropResults)
                                            {
                                                var re = getrectinfo(item.CropResult, imginfo.Height, imginfo.Width);
@@ -178,17 +179,17 @@ namespace toyoloformat
                                                var width = re.xmax - re.xmin;
                                                var height = re.ymax - re.ymin;
                                                var index = Array.IndexOf(classlist, item.Tag);
-                                               if (reviewinfo != null)
-                                               {
-                                                   if (item.Tag == "口红膏体及本体" && reviewinfo.RateSku.Contains("999", StringComparison.Ordinal))
-                                                   {
-                                                       index = 4;
-                                                   }
-                                                   if (item.Tag == "口红膏体及本体" && reviewinfo.RateSku.Contains("720", StringComparison.Ordinal))
-                                                   {
-                                                       index = 5;
-                                                   }
-                                               }
+                                               //if (reviewinfo != null)
+                                               //{
+                                               //    if (item.Tag == "口红膏体及本体" && reviewinfo.RateSku.Contains("999", StringComparison.Ordinal))
+                                               //    {
+                                               //        index = 4;
+                                               //    }
+                                               //    if (item.Tag == "口红膏体及本体" && reviewinfo.RateSku.Contains("720", StringComparison.Ordinal))
+                                               //    {
+                                               //        index = 5;
+                                               //    }
+                                               //}
                                                str.AppendLine($"{index} {xcenter / imginfo.Width} {ycenter / imginfo.Height} {width / imginfo.Width} {height / imginfo.Height}");
                                            }
                                            File.WriteAllText(txtfilepath, str.ToString());
@@ -250,7 +251,7 @@ namespace toyoloformat
                        int missingtag = 0;
                        int backgroundimg = 0;
                        Dictionary<string, int> calctag = new Dictionary<string, int>();
-                       foreach(var one in classlist)
+                       foreach (var one in classlist)
                        {
                            calctag[one] = 0;
                        }
@@ -300,16 +301,16 @@ namespace toyoloformat
                                        else
                                        {
                                            var sku = reviewInfo.RateSku;
-                                           if(detailpickval!=null)
+                                           if (detailpickval != null)
                                            {
                                                var match = detailpickval.Match(sku);
-                                               if(match.Success)
+                                               if (match.Success)
                                                {
                                                    sku = match.Value;
                                                }
                                            }
                                            string key = crop.Tag + ":::" + sku;
-                                           if(!calctag.ContainsKey(key))
+                                           if (!calctag.ContainsKey(key))
                                            {
                                                calctag.Add(key, 1);
                                            }
@@ -335,6 +336,39 @@ namespace toyoloformat
                        return 0;
                    });
                });
+            _ = app.Command("genlist", (command) =>
+            {
+                var imgfolder = command.Argument("imgfolder", string.Empty);
+                var outfolder = command.Argument("outfolder", string.Empty);
+                var trainpercent = command.Argument("trainpercent", "min is 0 and max is 100");
+                var exceptemptyoption = command.Option("--exceptempty", string.Empty, CommandOptionType.NoValue);
+                command.OnExecute(() =>
+                {
+                    var imgfolderval = imgfolder.Value;
+                    var trainpercentval = double.Parse(trainpercent.Value, CultureInfo.InvariantCulture);
+                    var exceptemptyoptionval = exceptemptyoption.HasValue();
+                    var outfolderval = outfolder.Value;
+                    var filelist = Directory.EnumerateFiles(imgfolderval).ToList();
+                    List<string> finallist;
+                    if (exceptemptyoptionval)
+                    {
+                        var jsonlist = filelist.Where(a => a.EndsWith(".json", StringComparison.OrdinalIgnoreCase)).Select(a => a[..^5]).ToHashSet();
+                        finallist = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) && jsonlist.Contains(a)).Shuffle().ToList();
+                    }
+                    else
+                    {
+                        finallist = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).Shuffle().ToList();
+                    }
+                    var traincountk = trainpercentval / 100.0;
+                    var traincount = (int)(traincountk * finallist.Count);
+                    var trainset = finallist.Take(traincount).ToList();
+                    var valset = finallist.Skip(traincount).ToList();
+                    var filenameran = DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture);
+                    File.WriteAllLines(Path.Combine(outfolderval, filenameran + "_train.txt"), trainset);
+                    File.WriteAllLines(Path.Combine(outfolderval, filenameran + "_val.txt"), valset);
+                    return 0;
+                });
+            });
             return app.Execute(args);
         }
     }

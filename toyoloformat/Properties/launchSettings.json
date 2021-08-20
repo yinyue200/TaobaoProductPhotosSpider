@@ -2,7 +2,7 @@
   "profiles": {
     "toyoloformat": {
       "commandName": "Project",
-      "commandLineArgs": "convert \"D:\\reports\\口红\\lihuiyu_val.txt\" \"D:\\reports\\口红\" \"D:\\reports\\口红\\yolo999720_【官方正品】全新Dior迪奥烈艳蓝金唇膏口红新色丝绒999720\\images\" \"D:\\reports\\口红\\yolo999720_【官方正品】全新Dior迪奥烈艳蓝金唇膏口红新色丝绒999720\\labels\" -d \"D:\\reports\\口红\\【官方正品】全新Dior迪奥烈艳蓝金唇膏口红 新色丝绒999720.json\""
+      "commandLineArgs": "convert \"D:\\reports\\口红\\lihuiyu_train.txt\" \"D:\\reports\\口红\" \"D:\\reports\\口红\\yolo_ysl\\images\" \"D:\\reports\\口红\\yolo_ysl\\labels\""
     }
   }
 }
