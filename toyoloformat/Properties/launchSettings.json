@@ -2,7 +2,7 @@
   "profiles": {
     "toyoloformat": {
       "commandName": "Project",
-      "commandLineArgs": "convert \"D:\\reports\\口红\\lihuiyu_train.txt\" \"D:\\reports\\口红\" \"D:\\reports\\口红\\yolo_ysl\\images\" \"D:\\reports\\口红\\yolo_ysl\\labels\""
+      "commandLineArgs": "convert \"D:\\reports\\口红\\637651317113790452_val.txt\" D:\\reports\\口红 \"D:\\reports\\口红\\yolo_彩妆周纪梵希\\images\" \"D:\\reports\\口红\\yolo_彩妆周纪梵希\\labels\""
     }
   }
 }

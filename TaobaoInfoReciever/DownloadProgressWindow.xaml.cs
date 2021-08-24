@@ -83,32 +83,52 @@ namespace TaobaoInfoReciever
                 using var httpclient = new System.Net.Http.HttpClient();
                 bool nocmp = true;
                 progress.Maximum = urls.Count;
+                async Task downloadaimageasync(string url,string filepath)
+                {
+                    var httpResponse = await httpclient.GetAsync(url, CancellationToken).ConfigureAwait(false);
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        using var stream = File.Create(filepath);
+                        await httpResponse.Content.CopyToAsync(stream).ConfigureAwait(false);
+                    }
+                }
                 while (nocmp)
                 {
                     bool havenoexist = false;
                     int downloadcount = 0;
-                    foreach (var one in urls)
+                    List<Task> tasklist = new(10);
+                    try
                     {
-                        CancellationToken.ThrowIfCancellationRequested();
-                        var imgpath = Path.Combine(dirname, one.Item2);
-                        if (File.Exists(imgpath))
+                        int threadcount = 8;
+                        foreach (var one in urls)
                         {
-                            downloadcount++;
-                        }
-                        else
-                        {
-                            havenoexist = true;
-
-                            //download
-                            downloadcount++;
-                            var httpResponse = await httpclient.GetAsync(one.Item1, CancellationToken);
-                            if (httpResponse.IsSuccessStatusCode)
+                            CancellationToken.ThrowIfCancellationRequested();
+                            while (tasklist.Count >= threadcount)
                             {
-                                using var stream = File.Create(imgpath);
-                                await httpResponse.Content.CopyToAsync(stream);
+                                await Task.WhenAny(tasklist);
+                                tasklist.RemoveAll(a => a.IsCompleted);
                             }
-                            progress.Value = downloadcount;
+
+
+                            var imgpath = Path.Combine(dirname, one.Item2);
+                            if (File.Exists(imgpath))
+                            {
+                                downloadcount++;
+                            }
+                            else
+                            {
+                                havenoexist = true;
+
+                                //download
+                                downloadcount++;
+                                tasklist.Add(downloadaimageasync(one.Item1, imgpath));
+                                progress.Value = downloadcount;
+                            }
                         }
+                    }
+                    finally
+                    {
+                        await Task.WhenAll(tasklist);
                     }
                     progress.Value = downloadcount;
                     if (!havenoexist)
