@@ -475,21 +475,23 @@ namespace toyoloformat
             });
             _ = app.Command("yologenbrand", (command) =>
                {
-                   var folderlist = command.Argument("folderlist", string.Empty, true);
+                   /*
+                   yologenbrand "D:\reports\口红\【彩妆周】GIVENCHY纪梵希美炸红丝绒口红唇膏N37 哑光 正品$
+                   D:\reports\口红\【官方正品】MAC魅可全色号子弹头口红唇膏大牌女 小辣椒正红色$D:\reports\口红\YSL圣罗兰小金条细管口红 哑光新色1966红棕色复古红21持久显色$
+                   D:\reports\口红\【新色上市】Dior迪奥烈艳蓝金唇膏口红 新色909 丝绒999 720$D:\reports\口红\植村秀小黑方柔雾唇膏哑光豆沙色亚洲纯红春夏限定新色mbg954口红" 20 
+                   "D:\reports\口红\yolo_brandout"
+                   */
+                   var folderlist = command.Argument("folderlist", string.Empty);
                    var trainpercent = command.Argument("trainpercent", "min is 0 and max is 100");
-                   var exceptemptyoption = command.Option("--exceptempty", string.Empty, CommandOptionType.NoValue);
                    var outfolder = command.Argument("outfolder", string.Empty);
                    command.OnExecute(() =>
                    {
-                       var folderlistval = folderlist.Values.Select(a =>
+                       var folderlistval = folderlist.Value.Split('$',StringSplitOptions.RemoveEmptyEntries).Select((a,i) =>
                        {
-                           var index = a.IndexOf(';');
-                           if (index < 0)
-                               throw new Exception();
-                           return (name: int.Parse(a[0..index]), path: a[(index + 1)..]);
+                           return (name: i, path: a);
                        }).ToList();
                        var trainpercentval = double.Parse(trainpercent.Value, CultureInfo.InvariantCulture);
-                       var exceptemptyoptionval = exceptemptyoption.HasValue();
+                       var exceptemptyoptionval = true;
                        var outfolderval = outfolder.Value;
                        var outimagefolder = Path.Combine(outfolderval, "images");
                        var outlabelfolder = Path.Combine(outfolderval, "labels");
@@ -521,32 +523,42 @@ namespace toyoloformat
                                    var imgfilenamepure = Path.GetFileNameWithoutExtension(imgpath);
                                    var imgfilename = Path.GetFileName(imgpath);
                                    var linkto = Path.Combine(outimagefolder, imgfilename);
-                                   if (!File.Exists(linkto))
-                                   {
-                                       LostTech.IO.Links.Symlink.CreateForFile(imgpath, linkto);
-                                   }
+
                                    var imgjsonpath = imgpath + ".json";
                                    var txtfilepath = Path.Combine(outlabelfolder, imgfilenamepure + ".txt");
-                                   if (File.Exists(imgjsonpath))
+
+                                   var imginfo = SixLabors.ImageSharp.Image.Identify(imgpath);
+                                   var tagresult = Newtonsoft.Json.JsonConvert.DeserializeObject<TagResult>(File.ReadAllText(imgjsonpath));
+
+                                   if(tagresult.TagCropResults is not null)
                                    {
-                                       var imginfo = SixLabors.ImageSharp.Image.Identify(imgpath);
-                                       var tagresult = Newtonsoft.Json.JsonConvert.DeserializeObject<TagResult>(File.ReadAllText(imgjsonpath));
-                                       if (tagresult != null && tagresult.TagCropResults != null)
+                                       var tags = tagresult.TagCropResults.Where(a => a.Tag is "口红本体" or "口红膏体及本体");
+
+                                       if (tags.Any())
                                        {
-                                           var str = new StringBuilder();
-                                           foreach (var item in tagresult.TagCropResults.Where(a=> a.Tag is "口红本体" or "口红膏体及本体"))
+                                           if (!File.Exists(linkto))
                                            {
-                                               var re = getrectinfo(item.CropResult, imginfo.Height, imginfo.Width);
-                                               var xcenter = (re.xmax + re.xmin) / 2.0;
-                                               var ycenter = (re.ymax + re.ymin) / 2.0;
-                                               var width = re.xmax - re.xmin;
-                                               var height = re.ymax - re.ymin;
-                                               var index = foldername;
-                                               str.AppendLine($"{index} {xcenter / imginfo.Width} {ycenter / imginfo.Height} {width / imginfo.Width} {height / imginfo.Height}");
+                                               LostTech.IO.Links.Symlink.CreateForFile(imgpath, linkto);
                                            }
-                                           File.WriteAllText(txtfilepath, str.ToString());
+
+                                           if (tagresult != null && tagresult.TagCropResults != null)
+                                           {
+                                               var str = new StringBuilder();
+                                               foreach (var item in tags)
+                                               {
+                                                   var re = getrectinfo(item.CropResult, imginfo.Height, imginfo.Width);
+                                                   var xcenter = (re.xmax + re.xmin) / 2.0;
+                                                   var ycenter = (re.ymax + re.ymin) / 2.0;
+                                                   var width = re.xmax - re.xmin;
+                                                   var height = re.ymax - re.ymin;
+                                                   var index = foldername;
+                                                   str.AppendLine($"{index} {xcenter / imginfo.Width} {ycenter / imginfo.Height} {width / imginfo.Width} {height / imginfo.Height}");
+                                               }
+                                               File.WriteAllText(txtfilepath, str.ToString());
+                                           }
                                        }
                                    }
+                                   
                                }
                            }
                        }
