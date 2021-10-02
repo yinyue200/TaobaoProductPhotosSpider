@@ -473,6 +473,86 @@ namespace toyoloformat
                 });
 
             });
+            _ = app.Command("yologenbrand", (command) =>
+               {
+                   var folderlist = command.Argument("folderlist", string.Empty, true);
+                   var trainpercent = command.Argument("trainpercent", "min is 0 and max is 100");
+                   var exceptemptyoption = command.Option("--exceptempty", string.Empty, CommandOptionType.NoValue);
+                   var outfolder = command.Argument("outfolder", string.Empty);
+                   command.OnExecute(() =>
+                   {
+                       var folderlistval = folderlist.Values.Select(a =>
+                       {
+                           var index = a.IndexOf(';');
+                           if (index < 0)
+                               throw new Exception();
+                           return (name: int.Parse(a[0..index]), path: a[(index + 1)..]);
+                       }).ToList();
+                       var trainpercentval = double.Parse(trainpercent.Value, CultureInfo.InvariantCulture);
+                       var exceptemptyoptionval = exceptemptyoption.HasValue();
+                       var outfolderval = outfolder.Value;
+                       var outimagefolder = Path.Combine(outfolderval, "images");
+                       var outlabelfolder = Path.Combine(outfolderval, "labels");
+                       if (!Directory.Exists(outimagefolder))
+                           Directory.CreateDirectory(outimagefolder);
+                       if (!Directory.Exists(outlabelfolder))
+                           Directory.CreateDirectory(outlabelfolder);
+                       foreach (var (foldername, folderpath) in folderlistval)
+                       {
+                           var filelist = Directory.EnumerateFiles(folderpath).ToList();
+                           List<string> finallist;
+                           if (exceptemptyoptionval)
+                           {
+                               var jsonlist = filelist.Where(a => a.EndsWith(".json", StringComparison.OrdinalIgnoreCase)).Select(a => a[..^5]).ToHashSet();
+                               finallist = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) && jsonlist.Contains(a)).Shuffle().ToList();
+                           }
+                           else
+                           {
+                               finallist = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).Shuffle().ToList();
+                           }
+                           var traincountk = trainpercentval / 100.0;
+                           var traincount = (int)(traincountk * finallist.Count);
+                           var trainset = finallist.Take(traincount).ToList();
+                           var valset = finallist.Skip(traincount).ToList();
+                           foreach (var imgpath in trainset.Concat(valset))
+                           {
+                               if (File.Exists(imgpath))
+                               {
+                                   var imgfilenamepure = Path.GetFileNameWithoutExtension(imgpath);
+                                   var imgfilename = Path.GetFileName(imgpath);
+                                   var linkto = Path.Combine(outimagefolder, imgfilename);
+                                   if (!File.Exists(linkto))
+                                   {
+                                       LostTech.IO.Links.Symlink.CreateForFile(imgpath, linkto);
+                                   }
+                                   var imgjsonpath = imgpath + ".json";
+                                   var txtfilepath = Path.Combine(outlabelfolder, imgfilenamepure + ".txt");
+                                   if (File.Exists(imgjsonpath))
+                                   {
+                                       var imginfo = SixLabors.ImageSharp.Image.Identify(imgpath);
+                                       var tagresult = Newtonsoft.Json.JsonConvert.DeserializeObject<TagResult>(File.ReadAllText(imgjsonpath));
+                                       if (tagresult != null && tagresult.TagCropResults != null)
+                                       {
+                                           var str = new StringBuilder();
+                                           foreach (var item in tagresult.TagCropResults.Where(a=> a.Tag is "口红本体" or "口红膏体及本体"))
+                                           {
+                                               var re = getrectinfo(item.CropResult, imginfo.Height, imginfo.Width);
+                                               var xcenter = (re.xmax + re.xmin) / 2.0;
+                                               var ycenter = (re.ymax + re.ymin) / 2.0;
+                                               var width = re.xmax - re.xmin;
+                                               var height = re.ymax - re.ymin;
+                                               var index = foldername;
+                                               str.AppendLine($"{index} {xcenter / imginfo.Width} {ycenter / imginfo.Height} {width / imginfo.Width} {height / imginfo.Height}");
+                                           }
+                                           File.WriteAllText(txtfilepath, str.ToString());
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                       return 0;
+                   });
+               });
             return app.Execute(args);
         }
     }
