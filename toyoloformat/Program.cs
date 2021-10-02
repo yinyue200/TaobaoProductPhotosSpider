@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.CommandLineUtils;
-using System;
+﻿using System;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -131,7 +132,13 @@ namespace toyoloformat
         static int Main(string[] args)
         {
             string[] classlist = new string[] { "口红本体", "口红膏体及本体", "口红涂抹样例", "口红外包装" };
-            var app = new CommandLineApplication();
+            var rootCommand = new RootCommand();
+            var convertcommand = new Command("convert");
+            {
+                var imglisttxt = new Argument("txtlistloc");
+                var basefolderforimglist = new Argument("basefolderforimglist");
+                var 
+            }
             _ = app.Command("convert", (command) =>
                {
                    var imglisttxt = command.Argument("txtlistloc", string.Empty);
