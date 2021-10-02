@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using static MoreLinq.Extensions.ShuffleExtension;
+using SixLabors.ImageSharp.Processing;
 
 namespace toyoloformat
 {
@@ -368,6 +369,109 @@ namespace toyoloformat
                     File.WriteAllLines(Path.Combine(outfolderval, filenameran + "_val.txt"), valset);
                     return 0;
                 });
+            });
+            _ = app.Command("yolosplitbycolor", (command) =>
+            {
+                var detailoption = command.Argument("reviewjsonpath", string.Empty);
+                var folderpath = command.Argument("folderpath", string.Empty);
+                var linkedtofolderpath = command.Argument("linkedtofolderpath", string.Empty);
+                var copyoption = command.Option("--copy", string.Empty, CommandOptionType.NoValue);
+                command.OnExecute(() =>
+                {
+                    var detailoptionval = detailoption.Value;
+                    var folderpathval = folderpath.Value;
+                    var linkedtofolderpathval = linkedtofolderpath.Value;
+                    var cachevalue = GetCacheInfo(detailoptionval);
+                    var iscopy = copyoption.HasValue();
+
+                    foreach (var one in Directory.EnumerateFiles(folderpathval))
+                    {
+                        var purename = Path.GetFileNameWithoutExtension(one);
+                        if (cachevalue.TryGetValue(purename, out var reviewInfo))
+                        {
+                            var sku = reviewInfo.RateSku;
+                            var folder = Path.Combine(linkedtofolderpathval, sku);
+                            if(!Directory.Exists(folder))
+                            {
+                                Directory.CreateDirectory(folder);
+                            }
+                            var linkto = Path.Combine(folder, purename + ".jpg");
+                            if (!File.Exists(linkto))
+                            {
+                                if(iscopy)
+                                {
+                                    File.Copy(one, linkto);
+                                }
+                                else
+                                {
+                                    LostTech.IO.Links.Symlink.CreateForFile(one, linkto);
+                                }
+                            }
+                        }
+                    }
+                    return 0;
+                });
+
+            });
+            _ = app.Command("cropbycolor", (command) =>
+            {
+                var detailoption = command.Argument("reviewjsonpath", string.Empty);
+                var folderpath = command.Argument("folderpath", string.Empty);
+                var linkedtofolderpath = command.Argument("linkedtofolderpath", string.Empty);
+                var copyoption = command.Option("--copy", string.Empty, CommandOptionType.NoValue);
+                command.OnExecute(() =>
+                {
+                    var detailoptionval = detailoption.Value;
+                    var folderpathval = folderpath.Value;
+                    var linkedtofolderpathval = linkedtofolderpath.Value;
+                    var cachevalue = GetCacheInfo(detailoptionval);
+
+                    foreach (var one in Directory.EnumerateFiles(folderpathval).Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var purename = Path.GetFileNameWithoutExtension(one);
+                        var jsonpath = one + ".json";
+                        if (cachevalue.TryGetValue(purename, out var reviewInfo))
+                        {
+                            if (File.Exists(jsonpath))
+                            {
+                                var tagresult = Newtonsoft.Json.JsonConvert.DeserializeObject<TagResult>(File.ReadAllText(jsonpath));
+                                if(tagresult.TagCropResults is not null)
+                                {
+                                    foreach (var item in tagresult.TagCropResults.Where(a => a.Tag == "口红膏体及本体"))
+                                    {
+                                        var img = SixLabors.ImageSharp.Image.Load(one, out var format);
+                                        var re = getrectinfo(item.CropResult, img.Height, img.Width);
+
+                                        var sku = reviewInfo.RateSku;
+                                        var folder = Path.Combine(linkedtofolderpathval, sku);
+                                        if (!Directory.Exists(folder))
+                                        {
+                                            Directory.CreateDirectory(folder);
+                                        }
+                                        var linkto = Path.Combine(folder, purename + ".jpg");
+                                        if (!File.Exists(linkto))
+                                        {
+                                            try
+                                            {
+                                                var nimage = img.Clone(i => i.Crop(new SixLabors.ImageSharp.Rectangle((int)re.xmin, (int)re.ymin, (int)(re.xmax - re.xmin), (int)(re.ymax - re.ymin))));
+                                                using var writeimgstream = File.Create(linkto);
+                                                nimage.Save(writeimgstream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
+                                            }
+                                            catch
+                                            {
+                                                File.Copy(one, linkto);
+                                                Console.WriteLine($"{one} invaild!");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    return 0;
+                });
+
             });
             return app.Execute(args);
         }

@@ -186,6 +186,22 @@ namespace TaobaoInfoReciever
             }
         }
 
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            //var dialog = new Microsoft.Win32.OpenFileDialog();
+            //var result = dialog.ShowDialog();
+            //if (result == true)
+            //{
+            //    var html = File.ReadAllText(dialog.FileName);
+            //    var context = BrowsingContext.New(Configuration.Default);
+            //    var parser = context.GetService<IHtmlParser>();
+            //    var document = parser.ParseDocument(html);
+            //    var com_table_main = document.QuerySelector(".com-table-main");
+            //    var divs = com_table_main.SelectNodes(".//img");
+
+            //}
+        }
+
         private void delbutton_Click(object sender, RoutedEventArgs e)
         {
             foreach (var item in list.SelectedItems.Cast<ParsedReviewsInfo>().ToList())

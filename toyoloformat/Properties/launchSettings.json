@@ -2,7 +2,7 @@
   "profiles": {
     "toyoloformat": {
       "commandName": "Project",
-      "commandLineArgs": "convert \"D:\\reports\\口红\\637651317113790452_val.txt\" D:\\reports\\口红 \"D:\\reports\\口红\\yolo_彩妆周纪梵希\\images\" \"D:\\reports\\口红\\yolo_彩妆周纪梵希\\labels\""
+      "commandLineArgs": "cropbycolor \"D:\\reports\\口红\\【官方正品】MAC魅可全色号子弹头口红唇膏大牌女 小辣椒正红色.json\" \"D:\\reports\\口红\\【官方正品】MAC魅可全色号子弹头口红唇膏大牌女 小辣椒正红色\" \"D:\\reports\\口红\\cropresult\\【官方正品】MAC魅可全色号子弹头口红唇膏大牌女 小辣椒正红色\" --copy"
     }
   }
 }

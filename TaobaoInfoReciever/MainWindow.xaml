@@ -7,17 +7,26 @@
         mc:Ignorable="d"
         Title="TaobaoInfoReciever-yinyue200" Height="450" Width="800">
     <Grid>
-        <ToggleButton Margin="10,10,0,0" HorizontalAlignment="Left" Width="76" Height="34"
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0" VerticalAlignment="Top">
+            <MenuItem Header="文件">
+                <MenuItem Header="转换 jd html" Click="MenuItem_Click"></MenuItem>
+            </MenuItem>
+        </Menu>
+        <ToggleButton Grid.Row="1" Margin="10,10,0,0" HorizontalAlignment="Left" Width="76" Height="34"
                       VerticalAlignment="Top" Checked="StartButton_Click" 
                       Unchecked="StopButton_Click">Listen</ToggleButton>
-        <Button x:Name="delbutton" Margin="100,10,0,0" Height="34" VerticalAlignment="Top" 
+        <Button Grid.Row="1" x:Name="delbutton" Margin="100,10,0,0" Height="34" VerticalAlignment="Top" 
                 HorizontalAlignment="Left" Width="76" Click="delbutton_Click" >DELETE</Button>
-        <Button x:Name="savebutton" Margin="194,10,0,0" Height="34" VerticalAlignment="Top" 
+        <Button Grid.Row="1" x:Name="savebutton" Margin="194,10,0,0" Height="34" VerticalAlignment="Top" 
                 HorizontalAlignment="Left" Width="67" Click="savebutton_Click" >SAVE</Button>
-        <Button x:Name="clearbutton" Margin="414,10,0,0" Height="34" VerticalAlignment="Top" 
+        <Button Grid.Row="1" x:Name="clearbutton" Margin="414,10,0,0" Height="34" VerticalAlignment="Top" 
                 HorizontalAlignment="Left" Width="67" Click="clearbutton_Click" >Clear</Button>
-        <Button x:Name="downloadbutton" Margin="500,10,0,0" Height="34" VerticalAlignment="Top" HorizontalAlignment="Left" Width="99" Click="downloadbutton_Click">DOWNLOAD</Button>
-        <ListView x:Name="list" Margin="0,49,0,0" SelectionMode="Multiple">
+        <Button Grid.Row="1" x:Name="downloadbutton" Margin="500,10,0,0" Height="34" VerticalAlignment="Top" HorizontalAlignment="Left" Width="99" Click="downloadbutton_Click">DOWNLOAD</Button>
+        <ListView Grid.Row="1" x:Name="list" Margin="0,49,0,0" SelectionMode="Multiple">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid Width="500">
@@ -27,6 +36,6 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <TextBox x:Name="portbox"  HorizontalAlignment="Left" Margin="280,18,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <TextBox Grid.Row="1" x:Name="portbox"  HorizontalAlignment="Left" Margin="280,18,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
     </Grid>
 </Window>
