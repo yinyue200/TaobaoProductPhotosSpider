@@ -499,6 +499,8 @@ namespace toyoloformat
                            Directory.CreateDirectory(outimagefolder);
                        if (!Directory.Exists(outlabelfolder))
                            Directory.CreateDirectory(outlabelfolder);
+                       List<List<string>> trainsets = new (folderlistval.Count);
+                       List<List<string>> valsets = new(folderlistval.Count);
                        foreach (var (foldername, folderpath) in folderlistval)
                        {
                            var filelist = Directory.EnumerateFiles(folderpath).ToList();
@@ -512,11 +514,7 @@ namespace toyoloformat
                            {
                                finallist = filelist.Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).Shuffle().ToList();
                            }
-                           var traincountk = trainpercentval / 100.0;
-                           var traincount = (int)(traincountk * finallist.Count);
-                           var trainset = finallist.Take(traincount).ToList();
-                           var valset = finallist.Skip(traincount).ToList();
-                           foreach (var imgpath in trainset.Concat(valset))
+                           foreach (var imgpath in finallist)
                            {
                                if (File.Exists(imgpath))
                                {
@@ -562,6 +560,14 @@ namespace toyoloformat
                                }
                            }
                        }
+                       var dirlist = Directory.EnumerateFiles(outimagefolder).Where(a => a.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)).ToList();
+                       var traincountk = trainpercentval / 100.0;
+                       var traincount = (int)(traincountk * dirlist.Count);
+                       var trainset = dirlist.Take(traincount).ToList();
+                       var valset = dirlist.Skip(traincount).ToList();
+                       var filenameran = DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture);
+                       File.WriteAllLines(Path.Combine(outfolderval, filenameran + "_train.txt"), trainset);
+                       File.WriteAllLines(Path.Combine(outfolderval, filenameran + "_val.txt"), valset);
                        return 0;
                    });
                });
