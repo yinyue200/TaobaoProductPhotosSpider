@@ -39,6 +39,35 @@ namespace YOLOv5sOnnxNetMlTest
         }
         void Start()
         {
+            using var image = System.Drawing.Image.FromFile(@"D:\reports\口红\【官方正品】MAC魅可全色号子弹头口红唇膏大牌女 小辣椒正红色\0ae3c97f679015e0ed98da7a98aa5c0e.jpg");
+
+            using var scorer = new YoloScorer<Yolov5s>(@"C:\Users\yinyu\Source\Repos\yolov5\runs\train\kouhong_brand_test_2\weights\best.onnx");
+
+            List<YoloPrediction> predictions = scorer.Predict(image);
+
+            using var graphics = System.Drawing.Graphics.FromImage(image);
+
+            foreach (var prediction in predictions) // iterate predictions to draw results
+            {
+                double score = Math.Round(prediction.Score, 2);
+
+                graphics.DrawRectangles(new System.Drawing.Pen(prediction.Label.Color, 1),
+                    new[] { prediction.Rectangle });
+
+                var (x, y) = (prediction.Rectangle.X - 3, prediction.Rectangle.Y - 23);
+
+                graphics.DrawString($"{prediction.Label.Name} ({score})",
+                    new System.Drawing.Font("Consolas", 16, System.Drawing.GraphicsUnit.Pixel), new System.Drawing.SolidBrush(prediction.Label.Color),
+                    new System.Drawing.PointF(x, y));
+            }
+
+            MemoryStream memoryStream = new MemoryStream();
+            image.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Bmp);
+
+            imgctrl.Source = BitmapFrame.Create(memoryStream);
+        }
+        void Start2()
+        {
             MLContext mlContext = new MLContext();
 
             var image = ImageNetData.ReadFromFile(@"D:\reports\口红\【官方正品】MAC魅可全色号子弹头口红唇膏大牌女 小辣椒正红色\0ae3c97f679015e0ed98da7a98aa5c0e.jpg");
